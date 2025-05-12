@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Generator</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Certificate Generator</h1>
+        </header>
+        
+        <main>
+            <div class="container">
+                <section class="setup-section">
+                    <h2>Upload Certificate Template</h2>
+                    <div class="upload-area" :class="{ 'has-template': templateURL }">
+                        <label for="template-upload" class="upload-label">
+                            <span v-if="!templateURL">Click to upload template</span>
+                            <span v-else>Replace template</span>
+                        </label>
+                        <input 
+                            type="file" 
+                            id="template-upload" 
+                            @change="handleTemplateUpload" 
+                            accept="image/*"
+                        >
+                        <div v-if="templateURL" class="template-preview">
+                            <img :src="templateURL" alt="Certificate template">
+                        </div>
+                    </div>
+                    
+                    <div v-if="templateURL" class="name-setup">
+                        <h2>Name Position Setup</h2>
+                        <div class="position-controls">
+                            <div class="control-group">
+                                <label for="x-position">Horizontal (X):</label>
+                                <input 
+                                    type="range" 
+                                    id="x-position" 
+                                    v-model.number="namePosition.x" 
+                                    min="0" 
+                                    max="100"
+                                > 
+                                <span>{{ namePosition.x }}%</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="y-position">Vertical (Y):</label>
+                                <input 
+                                    type="range" 
+                                    id="y-position" 
+                                    v-model.number="namePosition.y" 
+                                    min="0" 
+                                    max="100"
+                                >
+                                <span>{{ namePosition.y }}%</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="font-size">Font Size:</label>
+                                <input 
+                                    type="range" 
+                                    id="font-size" 
+                                    v-model.number="namePosition.fontSize" 
+                                    min="10" 
+                                    max="72"
+                                >
+                                <span>{{ namePosition.fontSize }}px</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="font-color">Font Color:</label>
+                                <input 
+                                    type="color" 
+                                    id="font-color" 
+                                    v-model="namePosition.color"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Font Style:</label>
+                        <div class="font-controls">
+                            <div class="current-font">
+                                <span>{{ customFontDisplayName || 'Default (Times New Roman)' }}</span>
+                            </div>
+                            <div class="font-buttons">
+                                <label for="font-upload" class="upload-label font-upload-label">
+                                    <span>Upload Font</span>
+                                </label>
+                                <input 
+                                    type="file" 
+                                    id="font-upload" 
+                                    @change="handleFontUpload" 
+                                    accept=".ttf,.otf,.woff,.woff2"
+                                    class="hidden"
+                                >
+                                <button @click="resetToDefaultFont" class="btn" :disabled="!customFontName">
+                                    Reset to Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="templateURL" class="names-setup">
+                        <h2>Enter Names (up to 100)</h2>
+                        <div class="names-input">
+                            <div class="names-controls">
+                                <button @click="addNameField" :disabled="names.length >= 100" class="btn">Add Name</button>
+                                <button @click="importNames" class="btn">Import from CSV</button>
+                                <input type="file" id="csv-upload" @change="handleCSVUpload" accept=".csv" class="hidden">
+                            </div>
+                            
+                            <div class="names-list">
+                                <div v-for="(name, index) in names" :key="index" class="name-entry">
+                                    <input 
+                                        type="text" 
+                                        v-model="names[index]" 
+                                        :placeholder="`Name ${index + 1}`"
+                                    >
+                                    <button @click="removeName(index)" class="btn-remove">×</button>
+                                </div>
+                            </div>
+                            
+                            <div class="names-count">{{ names.length }}/100 names</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <section v-if="templateURL" class="preview-section">
+                    <h2>Preview</h2>
+                    <div class="preview-container">
+                        <div class="certificate-preview" ref="preview">
+                            <img :src="templateURL" alt="Certificate template">
+                            <div 
+                                class="name-overlay" 
+                                :style="{
+                                    left: `${namePosition.x}%`,
+                                    top: `${namePosition.y}%`,
+                                    fontSize: `${namePosition.fontSize}px`,
+                                    color: namePosition.color
+                                }"
+                            >
+                                {{ previewName }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="generate-controls">
+                        <button @click="generateCertificates" :disabled="!canGenerate" class="btn btn-primary">
+                            Generate {{ names.length }} Certificates
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+        
+        <!-- Print container (hidden) -->
+        <div class="print-container" ref="printContainer"></div>
+    </div>
+    
+    <!-- Vue.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    
+    <!-- App scripts with type="module" to support ES6 modules -->
+    <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
