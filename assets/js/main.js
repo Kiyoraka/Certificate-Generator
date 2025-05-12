@@ -5,7 +5,7 @@ import {
     handleTemplateUpload, 
     importNames, 
     handleCSVUpload 
-} from './fileHandlers.js';
+} from './filehandlers.js';
 
 import { 
     addNameField, 
