@@ -11,7 +11,7 @@
         <header>
             <h1>Certificate Generator</h1>
         </header>
-        
+
         <main>
             <div class="container">
                 <section class="setup-section">
@@ -21,59 +21,94 @@
                             <span v-if="!templateURL">Click to upload template</span>
                             <span v-else>Replace template</span>
                         </label>
-                        <input 
-                            type="file" 
-                            id="template-upload" 
-                            @change="handleTemplateUpload" 
+                        <input
+                            type="file"
+                            id="template-upload"
+                            @change="handleTemplateUpload"
                             accept="image/*"
                         >
                         <div v-if="templateURL" class="template-preview">
                             <img :src="templateURL" alt="Certificate template">
                         </div>
                     </div>
-                    
+
                     <div v-if="templateURL" class="name-setup">
-                        <h2>Name Position Setup</h2>
+                        <h2>Field Position Setup</h2>
+
+                        <div class="position-tabs">
+                            <button
+                                class="tab-button"
+                                :class="{ active: activeTab === 'name' }"
+                                @click="selectTab('name')"
+                            >Name</button>
+                            <button
+                                class="tab-button"
+                                :class="{ active: activeTab === 'ic' }"
+                                @click="selectTab('ic')"
+                            >IC</button>
+                            <button
+                                v-for="(field, index) in extraFields"
+                                :key="'tab-' + index"
+                                class="tab-button"
+                                :class="{ active: activeTab === 'extra-' + index }"
+                                @click="selectTab('extra-' + index)"
+                            >
+                                {{ field.label }}
+                                <span
+                                    class="tab-close"
+                                    @click.stop="removeExtraField(index)"
+                                    title="Remove field"
+                                >&times;</span>
+                            </button>
+                            <button class="add-field-button" @click="addExtraField">+ Add Field</button>
+                        </div>
+
+                        <div v-if="activeTab.startsWith('extra-')" class="control-group">
+                            <label>Field Label:</label>
+                            <input
+                                type="text"
+                                :value="currentTabLabel"
+                                @input="updateExtraLabel(parseInt(activeTab.slice(6)), $event.target.value)"
+                                class="label-input"
+                            >
+                        </div>
+
                         <div class="position-controls">
                             <div class="control-group">
-                                <label for="x-position">Horizontal (X):</label>
-                                <input 
-                                    type="range" 
-                                    id="x-position" 
-                                    v-model.number="namePosition.x" 
-                                    min="0" 
-                                    max="100"
-                                > 
-                                <span>{{ namePosition.x }}%</span>
-                            </div>
-                            <div class="control-group">
-                                <label for="y-position">Vertical (Y):</label>
-                                <input 
-                                    type="range" 
-                                    id="y-position" 
-                                    v-model.number="namePosition.y" 
-                                    min="0" 
+                                <label>Horizontal (X):</label>
+                                <input
+                                    type="range"
+                                    v-model.number="currentPosition.x"
+                                    min="0"
                                     max="100"
                                 >
-                                <span>{{ namePosition.y }}%</span>
+                                <span>{{ currentPosition.x }}%</span>
                             </div>
                             <div class="control-group">
-                                <label for="font-size">Font Size:</label>
-                                <input 
-                                    type="range" 
-                                    id="font-size" 
-                                    v-model.number="namePosition.fontSize" 
-                                    min="10" 
+                                <label>Vertical (Y):</label>
+                                <input
+                                    type="range"
+                                    v-model.number="currentPosition.y"
+                                    min="0"
+                                    max="100"
+                                >
+                                <span>{{ currentPosition.y }}%</span>
+                            </div>
+                            <div class="control-group">
+                                <label>Font Size:</label>
+                                <input
+                                    type="range"
+                                    v-model.number="currentPosition.fontSize"
+                                    min="10"
                                     max="72"
                                 >
-                                <span>{{ namePosition.fontSize }}px</span>
+                                <span>{{ currentPosition.fontSize }}px</span>
                             </div>
                             <div class="control-group">
-                                <label for="font-color">Font Color:</label>
-                                <input 
-                                    type="color" 
-                                    id="font-color" 
-                                    v-model="namePosition.color"
+                                <label>Font Color:</label>
+                                <input
+                                    type="color"
+                                    v-model="currentPosition.color"
                                 >
                             </div>
                         </div>
@@ -89,10 +124,10 @@
                                 <label for="font-upload" class="upload-label font-upload-label">
                                     <span>Upload Font</span>
                                 </label>
-                                <input 
-                                    type="file" 
-                                    id="font-upload" 
-                                    @change="handleFontUpload" 
+                                <input
+                                    type="file"
+                                    id="font-upload"
+                                    @change="handleFontUpload"
                                     accept=".ttf,.otf,.woff,.woff2"
                                     class="hidden"
                                 >
@@ -102,7 +137,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div v-if="templateURL" class="names-setup">
                         <h2>Enter Names (up to 100)</h2>
                         <div class="names-input">
@@ -111,42 +146,87 @@
                                 <button @click="importNames" class="btn">Import from CSV</button>
                                 <input type="file" id="csv-upload" @change="handleCSVUpload" accept=".csv" class="hidden">
                             </div>
-                            
+
                             <div class="names-list">
-                                <div v-for="(name, index) in names" :key="index" class="name-entry">
-                                    <input 
-                                        type="text" 
-                                        v-model="names[index]" 
+                                <div v-for="(entry, index) in names" :key="index" class="name-entry">
+                                    <input
+                                        type="text"
+                                        v-model="entry.name"
                                         :placeholder="`Name ${index + 1}`"
+                                        class="entry-input entry-name"
                                     >
-                                    <button @click="removeName(index)" class="btn-remove">×</button>
+                                    <input
+                                        type="text"
+                                        v-model="entry.ic"
+                                        :placeholder="`IC ${index + 1}`"
+                                        class="entry-input entry-ic"
+                                    >
+                                    <input
+                                        v-for="(field, fIndex) in extraFields"
+                                        :key="'extra-input-' + fIndex"
+                                        type="text"
+                                        v-model="entry.extras[fIndex]"
+                                        :placeholder="`${field.label} ${index + 1}`"
+                                        class="entry-input entry-extra"
+                                    >
+                                    <button @click="removeName(index)" class="btn-remove">&times;</button>
                                 </div>
                             </div>
-                            
+
                             <div class="names-count">{{ names.length }}/100 names</div>
                         </div>
                     </div>
                 </section>
-                
+
                 <section v-if="templateURL" class="preview-section">
                     <h2>Preview</h2>
                     <div class="preview-container">
                         <div class="certificate-preview" ref="preview">
                             <img :src="templateURL" alt="Certificate template">
-                            <div 
-                                class="name-overlay" 
+                            <div
+                                v-if="previewEntry.name"
+                                class="name-overlay"
                                 :style="{
                                     left: `${namePosition.x}%`,
                                     top: `${namePosition.y}%`,
                                     fontSize: `${namePosition.fontSize}px`,
-                                    color: namePosition.color
+                                    color: namePosition.color,
+                                    fontFamily: fontFamily
                                 }"
                             >
-                                {{ previewName }}
+                                {{ previewEntry.name }}
+                            </div>
+                            <div
+                                v-if="previewEntry.ic"
+                                class="ic-overlay"
+                                :style="{
+                                    left: `${icPosition.x}%`,
+                                    top: `${icPosition.y}%`,
+                                    fontSize: `${icPosition.fontSize}px`,
+                                    color: icPosition.color,
+                                    fontFamily: fontFamily
+                                }"
+                            >
+                                {{ previewEntry.ic }}
+                            </div>
+                            <div
+                                v-for="(field, fIndex) in extraFields"
+                                :key="'preview-extra-' + fIndex"
+                                v-if="previewEntry.extras[fIndex]"
+                                class="extra-overlay"
+                                :style="{
+                                    left: `${field.position.x}%`,
+                                    top: `${field.position.y}%`,
+                                    fontSize: `${field.position.fontSize}px`,
+                                    color: field.position.color,
+                                    fontFamily: fontFamily
+                                }"
+                            >
+                                {{ previewEntry.extras[fIndex] }}
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="generate-controls">
                         <button @click="generateCertificates" :disabled="!canGenerate" class="btn btn-primary">
                             Generate {{ names.length }} Certificates
@@ -155,14 +235,14 @@
                 </section>
             </div>
         </main>
-        
+
         <!-- Print container (hidden) -->
         <div class="print-container" ref="printContainer"></div>
     </div>
-    
+
     <!-- Vue.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-    
+
     <!-- App scripts with type="module" to support ES6 modules -->
     <script type="module" src="assets/js/main.js"></script>
 </body>
