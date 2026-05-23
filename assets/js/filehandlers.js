@@ -1,6 +1,6 @@
 // File handling functions
 
-import { isImageFile, isCSVFile, parseCSVNames } from './utils.js';
+import { isImageFile, isCSVFile, parseCSVEntries } from './utils.js';
 
 /**
  * Handle template image upload
@@ -9,12 +9,12 @@ import { isImageFile, isCSVFile, parseCSVNames } from './utils.js';
 export function handleTemplateUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     if (!isImageFile(file)) {
         alert('Please upload an image file for the certificate template.');
         return;
     }
-    
+
     this.templateFile = file;
     this.templateURL = URL.createObjectURL(file);
 }
@@ -33,12 +33,12 @@ export function importNames() {
 export function handleCSVUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     if (!isCSVFile(file)) {
         alert('Please upload a CSV file.');
         return;
     }
-    
+
     readCSVFile.call(this, file);
 }
 
@@ -49,17 +49,17 @@ export function handleCSVUpload(event) {
 function readCSVFile(file) {
     const reader = new FileReader();
     const vueInstance = this;
-    
+
     reader.onload = function(e) {
         const csv = e.target.result;
-        const names = parseCSVNames(csv);
-        
-        if (names.length > 0) {
-            vueInstance.names = names;
+        const entries = parseCSVEntries(csv, vueInstance.extraFields.length);
+
+        if (entries.length > 0) {
+            vueInstance.names = entries;
         } else {
             alert('No valid names found in the CSV file.');
         }
     };
-    
+
     reader.readAsText(file);
 }
