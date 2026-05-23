@@ -33,10 +33,11 @@ export function importNames() {
  */
 export function downloadSampleCSV() {
     const extraLabels = this.extraFields.map(f => f.label);
+    // Fake placeholder rows - sample-only data, no real personal information
     const sampleRows = [
-        ['MOHAMMAD NASRUL MUHAIMIN BIN GHAZALI', '970122-03-5875'],
-        ['MOHAMAD ZAHIR BIN AMIR ZADA', '860101-03-5975'],
-        ['MUHAMMAD AIMAN BIN JAILANI', '890909-03-6097']
+        ['JOHN DOE', '000101-00-0001'],
+        ['JANE SMITH', '000202-00-0002'],
+        ['ALEX TAN', '000303-00-0003']
     ];
 
     // Pad each row with empty extras to match the current extraFields count
