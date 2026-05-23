@@ -18,7 +18,6 @@ A web-based tool for creating and printing multiple personalized certificates. U
 - HTML5
 - CSS3
 - JavaScript (ES6+)
-- Vue.js (2.6)
 - ES6 Modules
 - Print API integration
 - File API for handling uploads
