@@ -19,24 +19,35 @@ export function isCSVFile(file) {
 }
 
 /**
- * Parse CSV content to extract names
+ * Parse CSV content into entry objects.
+ * Column order: name, ic, extra1, extra2, ...
+ * Missing columns default to empty string. Backward-compatible with
+ * 1-column (name only) and 2-column (name + IC) CSVs.
+ *
  * @param {string} csvContent - The CSV file content
- * @returns {Array} Array of names
+ * @param {number} extraCount - Number of extra fields currently defined
+ * @returns {Array<{name: string, ic: string, extras: string[]}>} Array of entry objects
  */
-export function parseCSVNames(csvContent) {
+export function parseCSVEntries(csvContent, extraCount = 0) {
     const lines = csvContent.split(/\r\n|\n/);
-    const newNames = [];
-    
-    for (let i = 0; i < lines.length && newNames.length < 100; i++) {
+    const entries = [];
+
+    for (let i = 0; i < lines.length && entries.length < 100; i++) {
         const line = lines[i].trim();
-        if (line) {
-            // If there are commas, take the first column
-            const name = line.split(',')[0].trim();
-            if (name) {
-                newNames.push(name);
-            }
+        if (!line) continue;
+
+        const cells = line.split(',').map(cell => cell.trim());
+        const name = cells[0];
+        if (!name) continue;
+
+        const ic = cells[1] || '';
+        const extras = [];
+        for (let j = 0; j < extraCount; j++) {
+            extras.push(cells[2 + j] || '');
         }
+
+        entries.push({ name, ic, extras });
     }
-    
-    return newNames;
+
+    return entries;
 }
