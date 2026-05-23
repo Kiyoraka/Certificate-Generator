@@ -27,6 +27,41 @@ export function importNames() {
 }
 
 /**
+ * Download a sample CSV file that mirrors the current field schema.
+ * Columns: name, ic, then one column per defined extra field.
+ * Provides 3 example rows so the user can see the format at a glance.
+ */
+export function downloadSampleCSV() {
+    const extraLabels = this.extraFields.map(f => f.label);
+    const sampleRows = [
+        ['MOHAMMAD NASRUL MUHAIMIN BIN GHAZALI', '970122-03-5875'],
+        ['MOHAMAD ZAHIR BIN AMIR ZADA', '860101-03-5975'],
+        ['MUHAMMAD AIMAN BIN JAILANI', '890909-03-6097']
+    ];
+
+    // Pad each row with empty extras to match the current extraFields count
+    const rows = sampleRows.map(row => {
+        const padded = [...row];
+        for (let i = 0; i < extraLabels.length; i++) {
+            padded.push(`Sample ${extraLabels[i]}`);
+        }
+        return padded.join(',');
+    });
+
+    const csv = rows.join('\n') + '\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample-names.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/**
  * Handle CSV file upload for names
  * @param {Event} event - The file input change event
  */

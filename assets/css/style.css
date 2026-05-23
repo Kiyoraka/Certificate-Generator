@@ -221,6 +221,14 @@ input[type="color"] {
     background-color: #27ae60;
 }
 
+.btn-secondary {
+    background-color: #95a5a6;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
 .names-list {
     max-height: 300px;
     overflow-y: auto;

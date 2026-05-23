@@ -144,6 +144,7 @@
                             <div class="names-controls">
                                 <button @click="addNameField" :disabled="names.length >= 100" class="btn">Add Name</button>
                                 <button @click="importNames" class="btn">Import from CSV</button>
+                                <button @click="downloadSampleCSV" class="btn btn-secondary">Download Sample CSV</button>
                                 <input type="file" id="csv-upload" @change="handleCSVUpload" accept=".csv" class="hidden">
                             </div>
 

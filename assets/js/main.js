@@ -4,7 +4,8 @@
 import {
     handleTemplateUpload,
     importNames,
-    handleCSVUpload
+    handleCSVUpload,
+    downloadSampleCSV
 } from './filehandlers.js';
 
 import {
@@ -124,6 +125,10 @@ new Vue({
 
         handleCSVUpload(event) {
             handleCSVUpload.call(this, event);
+        },
+
+        downloadSampleCSV() {
+            downloadSampleCSV.call(this);
         },
 
         // Font handling methods
