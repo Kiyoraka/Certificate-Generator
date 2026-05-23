@@ -70,8 +70,8 @@ function loadCustomFont(fontFile) {
     this.customFontURL = fontURL;
     this.customFontFile = fontFile;
     
-    // Update the font family in the name position settings
-    this.namePosition.fontFamily = fontName;
+    // Update the shared font family (applies to Name + IC + every Extra overlay)
+    this.fontFamily = fontName;
     
     // Update font display name for UI
     this.customFontDisplayName = fontFile.name;
@@ -106,8 +106,8 @@ export function resetToDefaultFont() {
         this.customFontStyle = null;
     }
     
-    // Reset to default font family
-    this.namePosition.fontFamily = 'Times New Roman, serif';
+    // Reset to default font family (shared across all overlays)
+    this.fontFamily = 'Times New Roman, serif';
     this.customFontName = null;
     this.customFontURL = null;
     this.customFontFile = null;

@@ -2,24 +2,24 @@
 import { getValidNames } from './namesManager.js';
 
 /**
- * Main function to generate certificates for all names
+ * Main function to generate certificates for all entries
  */
 export function generateCertificates() {
     if (!this.canGenerate) return;
-    
+
     this.isGenerating = true;
-    
-    // Filter out empty names
-    const validNames = getValidNames(this.names);
-    
-    if (validNames.length === 0) {
+
+    // Filter out entries without a name
+    const validEntries = getValidNames(this.names);
+
+    if (validEntries.length === 0) {
         alert('Please enter at least one name.');
         this.isGenerating = false;
         return;
     }
-    
+
     preparePrintContainer.call(this);
-    loadTemplateAndGenerateCertificates.call(this, validNames);
+    loadTemplateAndGenerateCertificates.call(this, validEntries);
 }
 
 /**
@@ -33,89 +33,105 @@ function preparePrintContainer() {
 
 /**
  * Load template image and generate certificates
- * @param {Array} validNames - Array of valid names
+ * @param {Array} validEntries - Array of valid entry objects
  */
-function loadTemplateAndGenerateCertificates(validNames) {
+function loadTemplateAndGenerateCertificates(validEntries) {
     const templateImg = new Image();
     const vueInstance = this;
-    
+
     templateImg.onload = function() {
-        // Detect image orientation
         const isLandscape = templateImg.width > templateImg.height;
-        
-        createCertificatesForNames.call(vueInstance, validNames);
-        const styleElement = setupPrintStyles(isLandscape); // Pass orientation
+
+        createCertificatesForEntries.call(vueInstance, validEntries);
+        const styleElement = setupPrintStyles(isLandscape);
         triggerPrintProcess.call(vueInstance, styleElement);
     };
-    
+
     templateImg.onerror = function() {
         handleTemplateLoadError.call(vueInstance);
     };
-    
+
     templateImg.src = this.templateURL;
 }
 
 /**
- * Create certificate elements for each name
- * @param {Array} names - Array of names
+ * Create certificate elements for each entry
+ * @param {Array} entries - Array of entry objects
  */
-function createCertificatesForNames(names) {
+function createCertificatesForEntries(entries) {
     const printContainer = this.$refs.printContainer;
-    
-    names.forEach(name => {
-        const page = createCertificatePage.call(this, name);
+
+    entries.forEach(entry => {
+        const page = createCertificatePage.call(this, entry);
         printContainer.appendChild(page);
     });
 }
 
 /**
- * Create a single certificate page
- * @param {string} name - The name to display on the certificate
+ * Create a single certificate page with Name + IC + every defined Extra overlay
+ * @param {Object} entry - Entry object {name, ic, extras}
  * @returns {HTMLElement} The certificate page element
  */
-function createCertificatePage(name) {
-    // Create certificate page
+function createCertificatePage(entry) {
     const page = document.createElement('div');
     page.className = 'certificate-page';
-    
-    // Create certificate container
+
     const certificateContainer = document.createElement('div');
     certificateContainer.className = 'certificate-container';
-    
-    // Add template image
+
     const imgElement = document.createElement('img');
     imgElement.src = this.templateURL;
     certificateContainer.appendChild(imgElement);
-    
-    // Add name overlay
-    const nameElement = createNameElement.call(this, name);
-    certificateContainer.appendChild(nameElement);
-    
+
+    // Name overlay - always present (validation guarantees non-empty)
+    certificateContainer.appendChild(
+        createOverlay(entry.name, this.namePosition, this.fontFamily)
+    );
+
+    // IC overlay - skip if empty
+    if (entry.ic && entry.ic.trim() !== '') {
+        certificateContainer.appendChild(
+            createOverlay(entry.ic, this.icPosition, this.fontFamily)
+        );
+    }
+
+    // Extra overlays - one per defined extraFields entry, skip empties
+    this.extraFields.forEach((field, index) => {
+        const text = entry.extras[index];
+        if (text && text.trim() !== '') {
+            certificateContainer.appendChild(
+                createOverlay(text, field.position, this.fontFamily)
+            );
+        }
+    });
+
     page.appendChild(certificateContainer);
     return page;
 }
 
 /**
- * Create name overlay element
- * @param {string} name - The name text
- * @returns {HTMLElement} The name element
+ * Create a single absolutely-positioned text overlay.
+ * Generalizes the old createNameElement to work for any text+position.
+ * @param {string} text - The text to render
+ * @param {Object} position - Position object {x, y, fontSize, color}
+ * @param {string} fontFamily - Font family stack
+ * @returns {HTMLElement} The overlay element
  */
-function createNameElement(name) {
-    const nameElement = document.createElement('div');
-    nameElement.textContent = name;
-    nameElement.style.position = 'absolute';
-    nameElement.style.left = `${this.namePosition.x}%`;
-    nameElement.style.top = `${this.namePosition.y}%`;
-    nameElement.style.transform = 'translate(-50%, -50%)';
-    nameElement.style.fontSize = `${this.namePosition.fontSize}px`;
-    nameElement.style.color = this.namePosition.color;
-    nameElement.style.fontFamily = this.namePosition.fontFamily;
-    nameElement.style.fontWeight = 'bold';
-    nameElement.style.textAlign = 'center';
-    nameElement.style.whiteSpace = 'nowrap';
-    nameElement.style.zIndex = '10';
-    
-    return nameElement;
+function createOverlay(text, position, fontFamily) {
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.style.position = 'absolute';
+    el.style.left = `${position.x}%`;
+    el.style.top = `${position.y}%`;
+    el.style.transform = 'translate(-50%, -50%)';
+    el.style.fontSize = `${position.fontSize}px`;
+    el.style.color = position.color;
+    el.style.fontFamily = fontFamily;
+    el.style.fontWeight = 'bold';
+    el.style.textAlign = 'center';
+    el.style.whiteSpace = 'nowrap';
+    el.style.zIndex = '10';
+    return el;
 }
 
 /**
@@ -150,13 +166,10 @@ function handleTemplateLoadError() {
  */
 function triggerPrintProcess(styleElement) {
     const vueInstance = this;
-    
-    // Wait a bit to ensure all content is rendered properly
+
     setTimeout(function() {
-        // Trigger print dialog
         window.print();
-        
-        // Hide print container after printing and remove extra style
+
         setTimeout(function() {
             vueInstance.$refs.printContainer.style.display = 'none';
             vueInstance.isGenerating = false;
